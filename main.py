@@ -20,7 +20,7 @@ def main():
     if name is None or name == "":
         name = f'node:{port}:{id_generator(4)}'
 
-    Node(args.ip, port, name, args.bs_ip, args.bs_port).register()
+    Node(args.ip, port, name, args.bs_ip, args.bs_port).start()
 
 if __name__ == '__main__':
     main()
