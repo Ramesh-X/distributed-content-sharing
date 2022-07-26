@@ -1,19 +1,18 @@
 from .util import send, validate_response
+from .peer import Peer
 
 class Node:
-    def __init__(self, ip: str, port: int, name: str, bs_ip: str, bs_port: int) -> None:
-        self.ip = ip
-        self.port = port
-        self.bs_ip = bs_ip
-        self.bs_port = bs_port
+    def __init__(self, me: Peer, bs: Peer, name: str) -> None:
+        self.me = me
+        self.bs = bs
         self.name = name
     
     def start(self) -> None:
         pass
     
     def register(self) -> None:
-        msg = f'REG {self.ip} {self.port} {self.name}'
-        data = send(msg, self.bs_ip, self.bs_port)
+        msg = f'REG {self.me.ip} {self.me.port} {self.name}'
+        data = send(msg, self.bs)
         toks, err = validate_response(data, 3, 'REGOK')
         if err is not None:
             raise RuntimeError(err)

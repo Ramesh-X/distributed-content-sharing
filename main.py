@@ -1,6 +1,7 @@
 import argparse
 from random import randint
 
+from .peer import Peer
 from .node import Node
 from .util import id_generator
 
@@ -20,7 +21,9 @@ def main():
     if name is None or name == "":
         name = f'node:{port}:{id_generator(4)}'
 
-    Node(args.ip, port, name, args.bs_ip, args.bs_port).start()
+    me = Peer(args.ip, port)
+    bs = Peer(args.bs_ip, args.bs_port)
+    Node(me, bs, name).start()
 
 if __name__ == '__main__':
     main()
