@@ -24,6 +24,7 @@ class CMDServer(Thread):
         if x.startswith('round_trip_time '):
             self.node.round_trip_time(peer)
             return
+        
     
     def run(self) -> None:
         while(True):
@@ -45,6 +46,18 @@ class CMDServer(Thread):
                 self.node.disconnect()
                 return
             
+            if x.startswith('? '):
+                if len(x) < 4:
+                    print('Invalid query.')
+                    continue
+                self.node.search_file(x[2:])
+                continue
+
+            if x == 'toggle_failed':
+                self.node.failed = not self.node.failed
+                status = 'failed' if self.node.failed else 'not failed'
+                print(f'Node status set to {status}.')
+                continue
 
             if ' ' in x:
                 pid = int(x.split(' ')[1])

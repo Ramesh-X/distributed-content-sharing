@@ -59,8 +59,16 @@ class NodeWorker(Thread):
 
         toks, error = validate_response(data, 6, 'SER')
         if not error:
-            self.send_ok()
+            if self.node.failed:
+                self.send_ok()
+                return
+            respond_to = Peer(toks[2], int(toks[3]))
+            query = toks[4]
+            hop = int(toks[5])
             # search file
+            print(f'Searching for {query} and respond to {respond_to} at hop: {hop}...')
+            self.node.search_file(query, respond_to, hop+1)
+            self.send_ok()
             return
 
         toks, error = validate_response(data, 6, 'SEROK')

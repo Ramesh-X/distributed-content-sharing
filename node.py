@@ -12,6 +12,7 @@ class Node:
         self.name = name
         self.peers = []
         self.connected = None
+        self.failed = False
     
     def peers_str(self) -> str:
         l = [f'{i}: {j}' for i, j in enumerate(self.peers)]
@@ -106,3 +107,16 @@ class Node:
         x = t2-t1
         print(f'Measured round trip time to {peer} is {x} ns')
         return x
+    
+    def search_file(self, query: str, respond_to: Peer=None, hop: int=1) -> None:
+        print(f'Searching for {query}...')
+        if respond_to is None:
+            respond_to = self.me
+        msg = f'SER {respond_to.ip} {respond_to.port} {query} {hop}'
+        for peer in self.peers:
+            if peer == respond_to:
+                continue
+            data = send(msg, peer)
+            toks, err = validate_response(data, 2, 'OK')
+            if err is not None:
+                raise_error(err)
