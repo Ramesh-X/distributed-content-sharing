@@ -3,14 +3,14 @@ import random
 
 from util import raise_error, send, validate_response
 from peer import Peer
-
+    
 class Node:
     def __init__(self, me: Peer, bs: Peer, name: str) -> None:
         self.me = me
         self.bs = bs
         self.name = name
         self.peers = []
-        self.connected = False
+        self.connected = None
     
     def connect(self) -> None:
         peers = self.register()

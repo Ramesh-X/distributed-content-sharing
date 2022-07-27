@@ -1,6 +1,7 @@
 import argparse
 from random import randint
 from threading import Thread
+import time
 
 from peer import Peer
 from node import Node
@@ -31,7 +32,14 @@ def main():
 
     node_server = NodeServer(node)
     node_server.start()
+    time.sleep(1)
 
+    node_starter = Thread(target=node.connect)
+    node_starter.start()
+    time.sleep(1)
+    
+
+    node_starter.join()
     if args.cli:
         cmd_server = CMDServer(node)
         cmd_server.start()

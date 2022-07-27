@@ -1,4 +1,3 @@
-from curses.ascii import isdigit
 import random
 import string
 import socket
@@ -32,16 +31,16 @@ def validate_response(data: str, min_tokens: int, cmd: str) -> Tuple[List[str], 
         return tokens, 'Response command does not match.'
     return tokens, None
 
-def send(msg: str, peer: Peer, should_append_len=True, wait_for_response=True) -> str:
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect((peer.ip, peer.port))
+def send(msg: str, peer: Peer, should_append_len=True, wait_for_response=True, conn=None) -> None:
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) if conn is None else conn
     if should_append_len:
         msg = append_len(msg)
     print(f'Sending: "{msg}" to {peer}')
-    s.send(msg.encode())
+    s.sendto(msg.encode(), (peer.ip, peer.port))
     data = ""
     if wait_for_response:
-        data = s.recv(10000)
-    s.close()
-    return data.decode('ascii')
-
+        data = s.recv(10000).decode('ascii')
+    if conn is None:
+        s.close()
+    print(f'Sent! Received: "{data}"')
+    return data
