@@ -67,7 +67,3 @@ class Node:
             raise_error(f'Invalid return value: {value}')
         self.peers.remove(peer)
         print(f'Left from {peer}.')
-    
-    def listen(self) -> None:
-        pass
-

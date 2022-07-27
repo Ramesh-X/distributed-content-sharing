@@ -9,7 +9,6 @@ from .util import validate_response, append_len
 class NodeWorker(Thread):
 
     def __init__(self, conn, addr: str, node: Node):
-        super().__init__()
         self.conn = conn
         self.addr = addr
         self.node = node
