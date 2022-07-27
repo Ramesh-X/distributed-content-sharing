@@ -3,23 +3,23 @@ import socket
 
 from node import Node
 from peer import Peer
-from util import validate_response, append_len
+from util import validate_response, send
 
 
 class NodeWorker(Thread):
 
-    def __init__(self, data: str, addr: str, node: Node):
+    def __init__(self, data: str, peer: Peer, node: Node, s):
         super().__init__()
         self.data = data
-        print(addr)
-        self.addr = addr
+        self.peer = peer
         self.node = node
+        self.s = s
 
     def send_ok(self):
-        self.conn.send(f'0007 OK')
+        send('OK', self.peer, wait_for_response=False, conn=self.s)
 
-    def process(self):
-        data = self.conn.recv(10000)
+    def run(self):
+        data = self.data
         toks, error = validate_response(data, 4, 'JOIN')
         if not error:
             peer = Peer(toks[2], int(toks[3]))
@@ -28,8 +28,7 @@ class NodeWorker(Thread):
             else:
                 self.node.peers.append(peer)
                 msg = 'JOINOK 0'
-            msg = append_len(msg)
-            self.conn.send(msg)
+            send(msg, self.peer, wait_for_response=False, conn=self.s)
             return
 
         toks, error = validate_response(data, 4, 'LEAVE')
@@ -40,8 +39,11 @@ class NodeWorker(Thread):
                 msg = 'LEAVEOK 0'
             else:
                 msg = 'LEAVEOK 9999'
-            msg = append_len(msg)
-            self.conn.send(msg)
+            send(msg, self.peer, wait_for_response=False, conn=self.s)
+            return
+
+        if self.peer not in self.node.peers:
+            print(f'Received a message ({data}) from unknown peer: {peer}')
             return
 
         toks, error = validate_response(data, 6, 'SER')
@@ -58,22 +60,12 @@ class NodeWorker(Thread):
 
         print(f'Error while processing the received: "{data}"')
 
-    def run(self):
-        try:
-            self.process()
-        finally:
-            self.conn.close()
-
 
 class NodeServer(Thread):
 
     def __init__(self, node: Node) -> None:
         super().__init__()
         self.node = node
-
-    def start(self):
-        super().start()
-        self.node.connect()
 
     def run(self) -> None:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
@@ -82,8 +74,9 @@ class NodeServer(Thread):
             while True:
                 try:
                     data, addr = s.recvfrom(10000)
-                    NodeWorker(data.decode('ascii'), addr, self.node).start()
+                    peer = Peer(*addr)
+                    NodeWorker(data.decode('ascii'), peer, self.node, s).start()
                 except:
-                    if not self.node.connected:
+                    if self.node.connected == False:
                         return
                     continue
