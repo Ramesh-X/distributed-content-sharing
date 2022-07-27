@@ -13,6 +13,10 @@ def append_len(msg: str) -> str:
     l = len(msg) + 5
     return f'{l:04d} {msg}'
 
+def raise_error(err: str):
+    print(f'Error: {err}')
+    raise RuntimeError(err)
+
 def validate_response(data: str, min_tokens: int, cmd: str) -> Tuple[List[str], Optional[str]]:
     tokens = data.split()
     if min_tokens < 2:
@@ -29,6 +33,7 @@ def validate_response(data: str, min_tokens: int, cmd: str) -> Tuple[List[str], 
     return tokens, None
 
 def send(msg: str, peer: Peer, append_len=True, wait_for_response=True) -> str:
+    print(f'Sending: "{msg}" to {peer}')
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((peer.ip, peer.port))
     if append_len:
