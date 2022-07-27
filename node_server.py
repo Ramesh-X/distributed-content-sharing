@@ -6,6 +6,8 @@ from file_server import FileServer
 from peer import Peer
 from util import validate_response, send
 
+MAX_HOPS = 20
+
 
 class NodeWorker(Thread):
 
@@ -81,16 +83,28 @@ class NodeWorker(Thread):
             respond_to = Peer(toks[2], int(toks[3]))
             query = toks[4]
             hop = int(toks[5])
-            # search file
-            print(f'Searching for {query} and respond to {respond_to} at hop: {hop}...')
-            self.node.search_file(query, respond_to, hop+1)
+            if hop >= MAX_HOPS:
+                self.send_ok()
+                return
+            files = self.file_server.search(query)
+            if len(files) == 0:
+                self.node.search_file(query, respond_to, hop+1)
+            else:
+                self.node.files_found(files, respond_to, hop+1)
             self.send_ok()
             return
 
         toks, error = validate_response(data, 6, 'SEROK')
         if not error:
+            file_count = int(toks[2])
+            found_in = Peer(toks[3], int(toks[4]))
+            hop = int(toks[5])
+            files = ' '.join(toks[6:]).split(',')
+            print(f'Found {file_count} files in {found_in} at hop {hop}.')
+            print('###### Files ######')
+            print('\n'.join(files))
+            print('###################')
             self.send_ok()
-            # do something with files
             return
 
         print(f'Error while processing the received: "{data}"')

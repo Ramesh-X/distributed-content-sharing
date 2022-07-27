@@ -117,7 +117,7 @@ class Node:
         print(f'Measured round trip time to {peer} is {x} ns')
         return x
     
-    def search_file(self, query: str, respond_to: Peer=None, hop: int=1) -> None:
+    def search_file(self, query: str, respond_to: Peer=None, hop: int=0) -> None:
         print(f'Searching for {query}...')
         if respond_to is None:
             respond_to = self.me
@@ -129,3 +129,13 @@ class Node:
             toks, err = validate_response(data, 2, 'OK')
             if err is not None:
                 raise_error(err)
+    
+    def files_found(self, files: List[str], respond_to: Peer, hop: int) -> None:
+        print(f'Found {len(files)} files...')
+        fs = ','.join(files)
+        msg = f'SEROK {len(files)} {self.me.ip} {self.me.port} {hop} {fs}'
+        data = send(msg, respond_to)
+        toks, err = validate_response(data, 2, 'OK')
+        if err is not None:
+            raise_error(err)
+        print(f'Files found command sent to {respond_to}.')
