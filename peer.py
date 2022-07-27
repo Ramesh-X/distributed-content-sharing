@@ -5,3 +5,11 @@ class Peer:
     
     def __str__(self) -> str:
         return f'{self.ip}:{self.port}'
+    
+    def __eq__(self, o: object) -> bool:
+        if not isinstance(o, Peer):
+            return False
+        return self.ip == o.ip and self.port == o.port
+    
+    def __hash__(self) -> int:
+        return hash((self.ip, self.port))

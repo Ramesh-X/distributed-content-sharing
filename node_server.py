@@ -2,21 +2,47 @@ from threading import Thread
 import socket
 
 from .node import Node
-from .util import validate_response
+from .peer import Peer
+from .util import validate_response, append_len
 
 
 class NodeWorker(Thread):
 
-    def __init__(self, conn, addr):
+    def __init__(self, conn, addr: str, node: Node):
         super().__init__()
         self.conn = conn
         self.addr = addr
+        self.node = node
 
     def send_ok(self):
         self.conn.send(f'0007 OK')
 
     def process(self):
         data = self.conn.recv(10000)
+        toks, error = validate_response(data, 4, 'JOIN')
+        if not error:
+            peer = Peer(toks[2], int(toks[3]))
+            if peer in self.node.peers:
+                msg = 'JOINOK 9999'
+            else:
+                self.node.peers.append(peer)
+                msg = 'JOINOK 0'
+            msg = append_len(msg)
+            self.conn.send(msg)
+            return
+
+        toks, error = validate_response(data, 4, 'LEAVE')
+        if not error:
+            peer = Peer(toks[2], int(toks[3]))
+            if peer in self.node.peers:
+                self.node.peers.remove(peer)
+                msg = 'LEAVEOK 0'
+            else:
+                msg = 'LEAVEOK 9999'
+            msg = append_len(msg)
+            self.conn.send(msg)
+            return
+
         toks, error = validate_response(data, 6, 'SER')
         if not error:
             self.send_ok()
@@ -52,4 +78,4 @@ class NodeServer(Thread):
             s.listen()
             while True:
                 conn, addr = s.accept()
-                NodeWorker(conn, addr).start()
+                NodeWorker(conn, addr, self.node).start()
