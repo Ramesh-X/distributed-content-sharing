@@ -9,6 +9,7 @@ class Node:
         self.me = me
         self.bs = bs
         self.name = name
+        self.peers = []
     
     def start(self) -> None:
         pass
@@ -40,6 +41,32 @@ class Node:
         if value != 0:
             raise_error(f'Invalid return value: {value}')
         print('Unregistered with Bootstrap Server.')
+    
+    def join_to(self, peer: Peer) -> None:
+        print(f'Joining to {peer}...')
+        msg = f'JOIN {self.me.ip} {self.me.port}'
+        data = send(msg, peer)
+        toks, err = validate_response(data, 3, 'JOINOK')
+        if err is not None:
+            raise_error(err)
+        value = int(toks[2])
+        if value != 0:
+            raise_error(f'Invalid return value: {value}')
+        self.peers.append(peer)
+        print(f'Joined to {peer}.')
+    
+    def leave_from(self, peer: Peer) -> None:
+        print(f'Leaving from {peer}...')
+        msg = f'LEAVE {self.me.ip} {self.me.port}'
+        data = send(msg, peer)
+        toks, err = validate_response(data, 3, 'LEAVEOK')
+        if err is not None:
+            raise_error(err)
+        value = int(toks[2])
+        if value != 0:
+            raise_error(f'Invalid return value: {value}')
+        self.peers.remove(peer)
+        print(f'Left from {peer}.')
     
     def listen(self) -> None:
         pass
