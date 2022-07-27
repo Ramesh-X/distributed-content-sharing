@@ -42,8 +42,19 @@ class NodeWorker(Thread):
             send(msg, self.peer, wait_for_response=False, conn=self.s)
             return
 
-        if self.peer not in self.node.peers:
-            print(f'Received a message ({data}) from unknown peer: {peer}')
+        toks, error = validate_response(data, 2, 'OK')
+        if not error:
+            self.send_ok()
+            return
+        
+        toks, error = validate_response(data, 2, 'PRT')
+        if not error:
+            peers_str = self.node.peers_str()
+            if peers_str == '':
+                print('No peers.')
+            else:
+                print(peers_str)
+            self.send_ok()
             return
 
         toks, error = validate_response(data, 6, 'SER')
@@ -70,6 +81,7 @@ class NodeServer(Thread):
     def run(self) -> None:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.settimeout(10)
+            print('Listening on node server', self.node.me)
             s.bind((self.node.me.ip, self.node.me.port))
             while True:
                 try:

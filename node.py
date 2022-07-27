@@ -1,5 +1,6 @@
 from typing import List 
 import random
+import time
 
 from util import raise_error, send, validate_response
 from peer import Peer
@@ -11,6 +12,12 @@ class Node:
         self.name = name
         self.peers = []
         self.connected = None
+    
+    def peers_str(self) -> str:
+        l = [f'{i}: {j}' for i, j in enumerate(self.peers)]
+        if len(l) == 0:
+            return ''
+        return '\n'.join(l)
     
     def connect(self) -> None:
         peers = self.register()
@@ -77,3 +84,25 @@ class Node:
             raise_error(f'Invalid return value: {value}')
         self.peers.remove(peer)
         print(f'Left from {peer}.')
+    
+    def print_peers(self, peer: Peer) -> None:
+        print(f'Command {peer} to print peers...')
+        msg = 'PRT'
+        data = send(msg, peer)
+        _, err = validate_response(data, 2, 'OK')
+        if err is not None:
+            raise_error(err)
+        print(f'Print peers command sent to {peer}.')
+    
+    def round_trip_time(self, peer: Peer) -> int:
+        print(f'Calculating round trip time to {peer}...')
+        t1 = time.time_ns()
+        msg = 'OK'
+        data = send(msg, peer)
+        _, err = validate_response(data, 2, 'OK')
+        if err is not None:
+            raise_error(err)
+        t2 = time.time_ns()
+        x = t2-t1
+        print(f'Measured round trip time to {peer} is {x} ns')
+        return x
