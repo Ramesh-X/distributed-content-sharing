@@ -8,6 +8,7 @@ from node import Node
 from node_server import NodeServer
 from cmd_server import CMDServer
 from util import id_generator
+from file_server import FileServer
 
 def main():
     parser = argparse.ArgumentParser(description='File search node for the distributed file search system Bootstrap Server.')
@@ -30,7 +31,9 @@ def main():
     bs = Peer(args.bs_ip, args.bs_port)
     node = Node(me, bs, name)
 
-    node_server = NodeServer(node)
+    file_server = FileServer()
+
+    node_server = NodeServer(node, file_server)
     node_server.start()
     time.sleep(1)
 
@@ -41,7 +44,7 @@ def main():
 
     node_starter.join()
     if args.cli:
-        cmd_server = CMDServer(node)
+        cmd_server = CMDServer(node, file_server)
         cmd_server.start()
         cmd_server.join()
     

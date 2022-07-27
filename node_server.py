@@ -2,17 +2,19 @@ from threading import Thread
 import socket
 
 from node import Node
+from file_server import FileServer
 from peer import Peer
 from util import validate_response, send
 
 
 class NodeWorker(Thread):
 
-    def __init__(self, data: str, peer: Peer, node: Node, s):
+    def __init__(self, data: str, peer: Peer, node: Node, file_server: FileServer, s):
         super().__init__()
         self.data = data
         self.peer = peer
         self.node = node
+        self.file_server = file_server
         self.s = s
 
     def send_ok(self):
@@ -47,13 +49,27 @@ class NodeWorker(Thread):
             self.send_ok()
             return
         
-        toks, error = validate_response(data, 2, 'PRT')
+        toks, error = validate_response(data, 2, 'ROUTE')
         if not error:
             peers_str = self.node.peers_str()
             if peers_str == '':
                 print('No peers.')
             else:
+                print('###### Peers ######')
                 print(peers_str)
+                print('###################')
+            self.send_ok()
+            return
+        
+        toks, error = validate_response(data, 2, 'FILES')
+        if not error:
+            files = '\n'.join(self.file_server.file_names)
+            if files == '':
+                print('No files.')
+            else:
+                print('###### Files ######')
+                print(files)
+                print('###################')
             self.send_ok()
             return
 
@@ -82,9 +98,10 @@ class NodeWorker(Thread):
 
 class NodeServer(Thread):
 
-    def __init__(self, node: Node) -> None:
+    def __init__(self, node: Node, file_server: FileServer) -> None:
         super().__init__()
         self.node = node
+        self.file_server = file_server
 
     def run(self) -> None:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
@@ -95,7 +112,7 @@ class NodeServer(Thread):
                 try:
                     data, addr = s.recvfrom(10000)
                     peer = Peer(*addr)
-                    NodeWorker(data.decode('ascii'), peer, self.node, s).start()
+                    NodeWorker(data.decode('ascii'), peer, self.node, self.file_server, s).start()
                 except:
                     if self.node.connected == False:
                         return

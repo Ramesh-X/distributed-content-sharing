@@ -2,11 +2,13 @@ from threading import Thread
 
 from node import Node
 from peer import Peer
+from file_server import FileServer
 
 class CMDServer(Thread):
-    def __init__(self, node: Node) -> None:
+    def __init__(self, node: Node, file_server: FileServer) -> None:
         super().__init__()
         self.node = node
+        self.file_server = file_server
     
     def node_command(self, x: str, peer: Peer) -> None:
         if x.startswith('join_to '):
@@ -19,6 +21,10 @@ class CMDServer(Thread):
 
         if x.startswith('print_peers '):
             self.node.print_peers(peer)
+            return
+        
+        if x.startswith('print_files '):
+            self.node.print_files(peer)
             return
 
         if x.startswith('round_trip_time '):
@@ -40,6 +46,13 @@ class CMDServer(Thread):
                 if peers_str == '':
                     print('No peers.')
                 print(peers_str)
+                continue
+
+            if x == 'print_files':
+                files = '\n'.join(self.file_server.file_names)
+                if files == '':
+                    print('No files.')
+                print(files)
                 continue
 
             if x == 'disconnect' or x == 'exit' or x == 'stop' or x == 'quit' or x == 'q':

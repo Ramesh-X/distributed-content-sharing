@@ -88,12 +88,21 @@ class Node:
     
     def print_peers(self, peer: Peer) -> None:
         print(f'Command {peer} to print peers...')
-        msg = 'PRT'
+        msg = 'ROUTE'
         data = send(msg, peer)
         _, err = validate_response(data, 2, 'OK')
         if err is not None:
             raise_error(err)
         print(f'Print peers command sent to {peer}.')
+    
+    def print_files(self, peer: Peer) -> None:
+        print(f'Command {peer} to print files...')
+        msg = 'FILES'
+        data = send(msg, peer)
+        _, err = validate_response(data, 2, 'OK')
+        if err is not None:
+            raise_error(err)
+        print(f'Print files command sent to {peer}.')
     
     def round_trip_time(self, peer: Peer) -> int:
         print(f'Calculating round trip time to {peer}...')
