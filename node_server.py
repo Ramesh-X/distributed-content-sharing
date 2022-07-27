@@ -73,8 +73,14 @@ class NodeServer(Thread):
 
     def run(self) -> None:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(10)
             s.bind((self.node.me.ip, self.node.me.port))
             s.listen()
             while True:
-                conn, addr = s.accept()
-                NodeWorker(conn, addr, self.node).start()
+                try:
+                    conn, addr = s.accept()
+                    NodeWorker(conn, addr, self.node).start()
+                except:
+                    if not self.node.connected:
+                        return
+                    continue

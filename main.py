@@ -1,8 +1,11 @@
 import argparse
 from random import randint
+from threading import Thread
 
 from .peer import Peer
 from .node import Node
+from .node_server import NodeServer
+from .cmd_server import CMDServer
 from .util import id_generator
 
 def main():
@@ -12,6 +15,7 @@ def main():
     parser.add_argument('--port', '-p', type=int, required=False, help='Port to start the node on.')
     parser.add_argument('--bs_port', '-P', type=int, required=True, help='Port to start the Bootstrap Server.')
     parser.add_argument('--name', '-n', type=str, required=False, help='Unique username for the node.')
+    parser.add_argument('--cli', '-c', action='store_true', help='Run the node in CLI mode.')
 
     args = parser.parse_args()
     port = args.port
@@ -23,7 +27,18 @@ def main():
 
     me = Peer(args.ip, port)
     bs = Peer(args.bs_ip, args.bs_port)
-    Node(me, bs, name).start()
+    node = Node(me, bs, name)
+
+    node_server = NodeServer(node)
+    node_server.initialize()
+    node_server.start()
+
+    if args.cli:
+        cmd_server = CMDServer(node)
+        cmd_server.start()
+        cmd_server.join()
+    
+    node_server.join()
 
 if __name__ == '__main__':
     main()

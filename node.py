@@ -10,9 +10,18 @@ class Node:
         self.bs = bs
         self.name = name
         self.peers = []
+        self.connected = False
     
-    def start(self) -> None:
-        pass
+    def connect(self) -> None:
+        peers = self.register()
+        for peer in peers:
+            self.join_to(peer)
+        self.connected = True
+
+    def disconnect(self) -> None:
+        for peer in self.peers:
+            self.leave_from(peer)
+        self.connected = False
     
     def register(self) -> List[Peer]:
         print('Registering with Bootstrap Server...')
