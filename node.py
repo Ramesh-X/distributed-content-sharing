@@ -1,8 +1,8 @@
 from typing import List 
 import random
 
-from .util import raise_error, send, validate_response
-from .peer import Peer
+from util import raise_error, send, validate_response
+from peer import Peer
 
 class Node:
     def __init__(self, me: Peer, bs: Peer, name: str) -> None:
@@ -21,6 +21,7 @@ class Node:
     def disconnect(self) -> None:
         for peer in self.peers:
             self.leave_from(peer)
+        self.unregister()
         self.connected = False
     
     def register(self) -> List[Peer]:

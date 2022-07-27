@@ -4,7 +4,7 @@ import string
 import socket
 from typing import List, Optional, Tuple
 
-from .peer import Peer
+from peer import Peer
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits) -> str:
     return ''.join(random.choice(chars) for _ in range(size))
@@ -32,16 +32,16 @@ def validate_response(data: str, min_tokens: int, cmd: str) -> Tuple[List[str], 
         return tokens, 'Response command does not match.'
     return tokens, None
 
-def send(msg: str, peer: Peer, append_len=True, wait_for_response=True) -> str:
-    print(f'Sending: "{msg}" to {peer}')
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+def send(msg: str, peer: Peer, should_append_len=True, wait_for_response=True) -> str:
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect((peer.ip, peer.port))
-    if append_len:
+    if should_append_len:
         msg = append_len(msg)
-    s.send(msg)
+    print(f'Sending: "{msg}" to {peer}')
+    s.send(msg.encode())
     data = ""
     if wait_for_response:
         data = s.recv(10000)
     s.close()
-    return data
+    return data.decode('ascii')
 

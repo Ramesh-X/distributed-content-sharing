@@ -1,15 +1,17 @@
 from threading import Thread
 import socket
 
-from .node import Node
-from .peer import Peer
-from .util import validate_response, append_len
+from node import Node
+from peer import Peer
+from util import validate_response, append_len
 
 
 class NodeWorker(Thread):
 
-    def __init__(self, conn, addr: str, node: Node):
-        self.conn = conn
+    def __init__(self, data: str, addr: str, node: Node):
+        super().__init__()
+        self.data = data
+        print(addr)
         self.addr = addr
         self.node = node
 
@@ -66,20 +68,21 @@ class NodeWorker(Thread):
 class NodeServer(Thread):
 
     def __init__(self, node: Node) -> None:
+        super().__init__()
         self.node = node
 
-    def initialize(self) -> None:
-        self.node.start()
+    def start(self):
+        super().start()
+        self.node.connect()
 
     def run(self) -> None:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.settimeout(10)
             s.bind((self.node.me.ip, self.node.me.port))
-            s.listen()
             while True:
                 try:
-                    conn, addr = s.accept()
-                    NodeWorker(conn, addr, self.node).start()
+                    data, addr = s.recvfrom(10000)
+                    NodeWorker(data.decode('ascii'), addr, self.node).start()
                 except:
                     if not self.node.connected:
                         return

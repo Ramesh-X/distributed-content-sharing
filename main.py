@@ -2,11 +2,11 @@ import argparse
 from random import randint
 from threading import Thread
 
-from .peer import Peer
-from .node import Node
-from .node_server import NodeServer
-from .cmd_server import CMDServer
-from .util import id_generator
+from peer import Peer
+from node import Node
+from node_server import NodeServer
+from cmd_server import CMDServer
+from util import id_generator
 
 def main():
     parser = argparse.ArgumentParser(description='File search node for the distributed file search system Bootstrap Server.')
@@ -30,7 +30,6 @@ def main():
     node = Node(me, bs, name)
 
     node_server = NodeServer(node)
-    node_server.initialize()
     node_server.start()
 
     if args.cli:

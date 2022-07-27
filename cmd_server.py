@@ -1,9 +1,10 @@
 from threading import Thread
 
-from .node import Node
+from node import Node
 
 class CMDServer(Thread):
     def __init__(self, node: Node) -> None:
+        super().__init__()
         self.node = node
     
     def run(self) -> None:
@@ -14,6 +15,7 @@ class CMDServer(Thread):
                 print('\n'.join(l))
             elif x == 'disconnect':
                 self.node.disconnect()
+                return
             elif x.beginswith('join_to '):
                 pid = int(x.split(' ')[1])
                 peer = self.node.peers[pid]
