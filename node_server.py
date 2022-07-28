@@ -120,7 +120,7 @@ class NodeServer(Thread):
 
     def run(self) -> None:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-            s.settimeout(10)
+            s.settimeout(5)
             print('Listening on node server', self.node.me)
             s.bind((self.node.me.ip, self.node.me.port))
             while True:

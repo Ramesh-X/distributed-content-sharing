@@ -10,19 +10,24 @@ from cmd_server import CMDServer
 from util import id_generator
 from file_server import FileServer
 
+def validate_port(port: int) -> int:
+    if port is None or port < 1000 or port > 65535:
+        return randint(1000, 65535)
+    return port
+
 def main():
     parser = argparse.ArgumentParser(description='File search node for the distributed file search system Bootstrap Server.')
     parser.add_argument('--ip', '-i', type=str, required=True, help='IP address of the node.')
     parser.add_argument('--bs_ip', '-I', type=str, required=True, help='IP address of the Bootstrap Server.')
     parser.add_argument('--port', '-p', type=int, required=False, help='Port to start the node on.')
     parser.add_argument('--bs_port', '-P', type=int, required=True, help='Port to start the Bootstrap Server.')
+    parser.add_argument('--file_port', '-f', type=int, required=False, help='Port to start the file server on.')
     parser.add_argument('--name', '-n', type=str, required=False, help='Unique username for the node.')
     parser.add_argument('--cli', '-c', action='store_true', help='Run the node in CLI mode.')
 
     args = parser.parse_args()
-    port = args.port
-    if port is None or port < 1000 or port > 65535:
-        port = randint(1000, 65535)
+    port = validate_port(args.port)
+    file_port = validate_port(args.file_port)
     name = args.name
     if name is None or name == "":
         name = f'node:{port}:{id_generator(4)}'
@@ -31,7 +36,8 @@ def main():
     bs = Peer(args.bs_ip, args.bs_port)
     node = Node(me, bs, name)
 
-    file_server = FileServer()
+    file_server = FileServer(name, Peer(me.ip, file_port))
+    file_server.start()
 
     node_server = NodeServer(node, file_server)
     node_server.start()
@@ -49,6 +55,7 @@ def main():
         cmd_server.join()
     
     node_server.join()
+    file_server.join()
 
 if __name__ == '__main__':
     main()

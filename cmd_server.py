@@ -57,6 +57,7 @@ class CMDServer(Thread):
 
             if x == 'disconnect' or x == 'exit' or x == 'stop' or x == 'quit' or x == 'q':
                 self.node.disconnect()
+                self.file_server.stop()
                 return
             
             if x.startswith('? '):
