@@ -2,7 +2,7 @@ from typing import List
 import random
 import time
 
-from util import raise_error, send, validate_response
+from util import id_generator, raise_error, send, validate_response
 from peer import Peer
     
 class Node:
@@ -27,7 +27,7 @@ class Node:
         self.connected = True
 
     def disconnect(self) -> None:
-        for peer in self.peers:
+        for peer in list(self.peers):
             self.leave_from(peer)
         self.unregister()
         self.connected = False
@@ -117,11 +117,13 @@ class Node:
         print(f'Measured round trip time to {peer} is {x} ns')
         return x
     
-    def search_file(self, query: str, respond_to: Peer=None, hop: int=0) -> None:
+    def search_file(self, query: str, respond_to: Peer=None, hop: int=0, search_key: str=None) -> None:
         print(f'Searching for {query}...')
         if respond_to is None:
             respond_to = self.me
-        msg = f'SER {respond_to.ip} {respond_to.port} {query} {hop}'
+        if search_key is None:
+            search_key = id_generator(6)
+        msg = f'SER {respond_to.ip} {respond_to.port} {query} {hop} {search_key}'
         for peer in self.peers:
             if peer == respond_to:
                 continue
@@ -130,10 +132,10 @@ class Node:
             if err is not None:
                 raise_error(err)
     
-    def files_found(self, files: List[str], respond_to: Peer, hop: int) -> None:
-        print(f'Found {len(files)} files...')
+    def files_found(self, files: List[str], respond_to: Peer, hop: int, search_key: str) -> None:
+        print(f'Found {len(files)} files for key {search_key}...')
         fs = ','.join(files)
-        msg = f'SEROK {len(files)} {self.me.ip} {self.me.port} {hop} {fs}'
+        msg = f'SEROK {len(files)} {self.me.ip} {self.me.port} {hop} {search_key} {fs}'
         data = send(msg, respond_to)
         toks, err = validate_response(data, 2, 'OK')
         if err is not None:
