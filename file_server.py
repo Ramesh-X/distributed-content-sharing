@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 from pathlib import Path
 from threading import Thread
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -6,6 +6,7 @@ import random
 import re
 
 from peer import Peer
+from util import id_generator
 
 
 def get_handler_class(files_meta: Dict[str, str]) -> BaseHTTPRequestHandler:
@@ -63,6 +64,30 @@ class FileServer(Thread):
     def stop(self) -> None:
         self.server.shutdown()
         self.server.server_close()
+
+    def _url_for(self, key: str) -> str:
+        return f'http://{self.addr}/{key}'
+
+    def _create_file(self, path: Path) -> str:
+        size = random.randint(2 * 1024 * 1024, 10 * 1024 * 1024)
+        path.write_text(id_generator(size))
+        key = id_generator(10)
+        self.files_meta[key] = path.absolute()
+        return key
+
+    def download_file(self, filename) -> Optional[str]:
+        print("Downloading file:", filename)
+        print("Available files", self.file_names)
+        if filename not in self.file_names:
+            return None
+        path = Path(f'{self.file_dir}/{filename}')
+        print("Path:", path, "Exists:", path.exists())
+        if path.exists():
+            for key in self.search_keys:
+                if self.search_keys[key] == path.absolute():
+                    return self._url_for(key)
+        key = self._create_file(path)
+        return self._url_for(key)
 
     def already_search_for(self, key: str) -> bool:
         return key in self.search_keys

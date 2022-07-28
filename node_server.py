@@ -107,6 +107,16 @@ class NodeWorker(Thread):
                 print('\n'.join(files))
                 print('###################')
             return
+        
+        toks, error = validate_response(data, 3, 'DOWN')
+        if not error:
+            file_url = self.file_server.download_file(' '.join(toks[2:]))
+            if file_url is None:
+                msg = 'DOWNOK 1'
+            else:
+                msg = f'DOWNOK 0 {file_url}'
+            send(msg, self.peer, wait_for_response=False, conn=self.s)
+            return
 
         print(f'Error while processing the received: "{data}"')
 

@@ -1,4 +1,4 @@
-from typing import List 
+from typing import List, Optional 
 import random
 import time
 
@@ -141,3 +141,20 @@ class Node:
         if err is not None:
             raise_error(err)
         print(f'Files found command sent to {respond_to}.')
+    
+    def download(self, peer: Peer, filename: str) -> Optional[str]:
+        print(f'Downloading {filename}...')
+        msg = f'DOWN {filename}'
+        data = send(msg, peer)
+        toks, err = validate_response(data, 3, 'DOWNOK')
+        if err is not None:
+            raise_error(err)
+        value = int(toks[2])
+        if value == 0:
+            url = toks[3]
+            print(f'{filename} can be downloaded from {url}.')
+            return url
+        if value == 1:
+            print(f'{filename} is not available.')
+            return None
+        raise_error(f'Invalid return value: {value}')

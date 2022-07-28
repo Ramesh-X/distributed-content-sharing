@@ -31,6 +31,11 @@ class CMDServer(Thread):
             self.node.round_trip_time(peer)
             return
         
+        if x.startswith('download '):
+            filename = ' '.join(x.split(' ')[2:])
+            self.node.download(peer, filename)
+            return
+        
     
     def run(self) -> None:
         while(True):
