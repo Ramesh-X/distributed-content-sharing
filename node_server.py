@@ -1,5 +1,6 @@
 from threading import Thread
 import socket
+import time
 
 from node import Node
 from file_server import FileServer
@@ -24,7 +25,9 @@ class NodeWorker(Thread):
 
     def run(self):
         data = self.data
+        print(f'Received: "{data}"')
         toks, error = validate_response(data, 4, 'JOIN')
+
         if not error:
             peer = Peer(toks[2], int(toks[3]))
             if peer in self.node.peers:
@@ -81,9 +84,9 @@ class NodeWorker(Thread):
             if self.node.failed:
                 return
             respond_to = Peer(toks[2], int(toks[3]))
-            query = toks[4]
-            hop = int(toks[5])
-            search_key = toks[6]
+            hop = int(toks[4])
+            search_key = toks[5]
+            query = ' '.join(toks[6:])
             if hop >= MAX_HOPS:
                 return
             if self.file_server.already_search_for(search_key):
@@ -101,7 +104,7 @@ class NodeWorker(Thread):
             hop = int(toks[5])
             search_key = toks[6]
             files = ' '.join(toks[7:]).split(',')
-            print(f'Found {file_count} files in {found_in} at hop {hop} for search key: {search_key}.')
+            print(f'Found {file_count} files in {found_in} at hop {hop} with search key: {search_key} at: {time.time_ns()} ns.')
             if file_count > 0:
                 print('###### Files ######')
                 print('\n'.join(files))
@@ -118,7 +121,7 @@ class NodeWorker(Thread):
             send(msg, self.peer, wait_for_response=False, conn=self.s)
             return
 
-        print(f'Error while processing the received: "{data}"')
+        print('Error while processing the received!')
 
 
 class NodeServer(Thread):

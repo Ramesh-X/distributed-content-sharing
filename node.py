@@ -118,12 +118,12 @@ class Node:
         return x
     
     def search_file(self, query: str, respond_to: Peer=None, hop: int=0, search_key: str=None) -> None:
-        print(f'Searching for {query}...')
-        if respond_to is None:
-            respond_to = self.me
         if search_key is None:
             search_key = id_generator(6)
-        msg = f'SER {respond_to.ip} {respond_to.port} {query} {hop} {search_key}'
+        print(f'Searching for {query} with key: {search_key} hop: {hop} at: {time.time_ns()} ns...')
+        if respond_to is None:
+            respond_to = self.me
+        msg = f'SER {respond_to.ip} {respond_to.port} {hop} {search_key} {query}'
         for peer in self.peers:
             if peer == respond_to:
                 continue
@@ -133,7 +133,7 @@ class Node:
                 raise_error(err)
     
     def files_found(self, files: List[str], respond_to: Peer, hop: int, search_key: str) -> None:
-        print(f'Found {len(files)} files for key {search_key}...')
+        print(f'Sending file found command for {len(files)} files with key {search_key}...')
         fs = ','.join(files)
         msg = f'SEROK {len(files)} {self.me.ip} {self.me.port} {hop} {search_key} {fs}'
         data = send(msg, respond_to)

@@ -71,6 +71,15 @@ class CMDServer(Thread):
                     continue
                 self.node.search_file(x[2:])
                 continue
+        
+            if x == 'auto_search':
+                with open('queries.txt', 'r') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line == '':
+                            continue
+                        self.node.search_file(line.strip())
+                continue
 
             if x == 'toggle_failed':
                 self.node.failed = not self.node.failed
@@ -79,7 +88,11 @@ class CMDServer(Thread):
                 continue
 
             if ' ' in x:
-                pid = int(x.split(' ')[1])
+                try:
+                    pid = int(x.split(' ')[1])
+                except:
+                    print('Invalid value for id.')
+                    continue
                 if pid >= len(self.node.peers) or pid < 0:
                     print('Invalid peer id.')
                     continue
