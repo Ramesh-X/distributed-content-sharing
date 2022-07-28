@@ -1,4 +1,5 @@
 from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
 import socket
 import time
 
@@ -10,10 +11,9 @@ from util import validate_response, send
 MAX_HOPS = 20
 
 
-class NodeWorker(Thread):
+class NodeWorker:
 
     def __init__(self, data: str, peer: Peer, node: Node, file_server: FileServer, s):
-        super().__init__()
         self.data = data
         self.peer = peer
         self.node = node
@@ -130,6 +130,7 @@ class NodeServer(Thread):
         super().__init__()
         self.node = node
         self.file_server = file_server
+        self.executor = ThreadPoolExecutor(max_workers=1)
 
     def run(self) -> None:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
@@ -140,8 +141,10 @@ class NodeServer(Thread):
                 try:
                     data, addr = s.recvfrom(10000)
                     peer = Peer(*addr)
-                    NodeWorker(data.decode('ascii'), peer, self.node, self.file_server, s).start()
+                    worker = NodeWorker(data.decode('ascii'), peer, self.node, self.file_server, s)
+                    self.executor.submit(worker.run)
                 except:
                     if self.node.connected == False:
+                        self.executor.shutdown(wait=True)
                         return
                     continue
