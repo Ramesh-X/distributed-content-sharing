@@ -9,7 +9,6 @@ from node_server import NodeServer
 from cmd_server import CMDServer
 from util import id_generator
 from file_server import FileServer
-from logger import create_generator
 
 def validate_port(port: int) -> int:
     if port is None or port < 1000 or port > 65535:
@@ -32,7 +31,6 @@ def main():
     name = args.name
     if name is None or name == "":
         name = f'node:{port}:{id_generator(4)}'
-    create_generator(name)
 
     me = Peer(args.ip, port)
     bs = Peer(args.bs_ip, args.bs_port)

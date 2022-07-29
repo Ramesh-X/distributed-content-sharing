@@ -1,18 +1,20 @@
 from typing import Any, Callable
 from pathlib import Path
+from time import time
 import logging
 import sys
 
 
 class _LogGenerator:
 
-    def __init__(self, name) -> None:
+    def __init__(self) -> None:
         formatter = logging.Formatter(
             '%(asctime)s - %(name)s - %(threadName)s - %(message)s')
         self.stream_handler = logging.StreamHandler(sys.stdout)
         self.stream_handler.setFormatter(formatter)
         Path('logs/').mkdir(parents=True, exist_ok=True)
-        self.file_handler = logging.FileHandler(f'logs/{name}.log',
+        t = str(int(time() * 10))[-9:]
+        self.file_handler = logging.FileHandler(f'logs/{t}.log',
                                                 encoding='utf8')
         self.file_handler.setFormatter(formatter)
 
@@ -24,12 +26,7 @@ class _LogGenerator:
         return logger
 
 
-_generator: _LogGenerator = None
-
-
-def create_generator(name):
-    global _generator
-    _generator = _LogGenerator(name)
+_generator = _LogGenerator()
 
 
 def log_printer(name: str) -> Callable[[Any], None]:
