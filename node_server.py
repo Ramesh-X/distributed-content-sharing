@@ -7,6 +7,7 @@ from node import Node
 from file_server import FileServer
 from peer import Peer
 from util import validate_response, send
+from logger import log_printer
 
 MAX_HOPS = 20
 
@@ -14,6 +15,7 @@ MAX_HOPS = 20
 class NodeWorker:
 
     def __init__(self, data: str, peer: Peer, node: Node, file_server: FileServer, s):
+        self.log = log_printer(f'node_worker_{peer}')
         self.data = data
         self.peer = peer
         self.node = node
@@ -25,7 +27,7 @@ class NodeWorker:
 
     def run(self):
         data = self.data
-        print(f'Received: "{data}"')
+        self.log(f'Received: "{data}"')
         toks, error = validate_response(data, 4, 'JOIN')
 
         if not error:
@@ -58,11 +60,11 @@ class NodeWorker:
         if not error:
             peers_str = self.node.peers_str()
             if peers_str == '':
-                print('No peers.')
+                self.log('No peers.')
             else:
-                print('###### Peers ######')
-                print(peers_str)
-                print('###################')
+                self.log('###### Peers ######')
+                self.log(peers_str)
+                self.log('###################')
             self.send_ok()
             return
         
@@ -70,11 +72,11 @@ class NodeWorker:
         if not error:
             files = '\n'.join(self.file_server.file_names)
             if files == '':
-                print('No files.')
+                self.log('No files.')
             else:
-                print('###### Files ######')
-                print(files)
-                print('###################')
+                self.log('###### Files ######')
+                self.log(files)
+                self.log('###################')
             self.send_ok()
             return
 
@@ -104,11 +106,11 @@ class NodeWorker:
             hop = int(toks[5])
             search_key = toks[6]
             files = ' '.join(toks[7:]).split(',')
-            print(f'Found {file_count} files in {found_in} at hop {hop} with search key: {search_key} at: {time.time_ns()} ns.')
+            self.log(f'Found {file_count} files in {found_in} at hop {hop} with search key: {search_key} at: {time.time_ns()} ns.')
             if file_count > 0:
-                print('###### Files ######')
-                print('\n'.join(files))
-                print('###################')
+                self.log('###### Files ######')
+                self.log('\n'.join(files))
+                self.log('###################')
             return
         
         toks, error = validate_response(data, 3, 'DOWN')
@@ -121,13 +123,15 @@ class NodeWorker:
             send(msg, self.peer, wait_for_response=False, conn=self.s)
             return
 
-        print('Error while processing the received!')
+        self.log('Error while processing the received!')
 
 
 class NodeServer(Thread):
 
-    def __init__(self, node: Node, file_server: FileServer) -> None:
+    def __init__(self, name: str, node: Node, file_server: FileServer) -> None:
         super().__init__()
+        self.log = log_printer('node_server')
+        self.name = name
         self.node = node
         self.file_server = file_server
         self.executor = ThreadPoolExecutor(max_workers=1)
@@ -135,7 +139,7 @@ class NodeServer(Thread):
     def run(self) -> None:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.settimeout(5)
-            print('Listening on node server', self.node.me)
+            self.log(f'Listening on node server ({self.name}): {self.node.me}')
             s.bind((self.node.me.ip, self.node.me.port))
             while True:
                 try:

@@ -4,6 +4,9 @@ import socket
 from typing import List, Optional, Tuple
 
 from peer import Peer
+from logger import log_printer
+
+log = log_printer('util')
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits) -> str:
     return ''.join(random.choice(chars) for _ in range(size))
@@ -13,7 +16,7 @@ def append_len(msg: str) -> str:
     return f'{l:04d} {msg}'
 
 def raise_error(err: str):
-    print(f'Error: {err}')
+    log(f'Error: {err}')
     raise RuntimeError(err)
 
 def validate_response(data: str, min_tokens: int, cmd: str) -> Tuple[List[str], Optional[str]]:
@@ -35,12 +38,12 @@ def send(msg: str, peer: Peer, should_append_len=True, wait_for_response=True, c
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) if conn is None else conn
     if should_append_len:
         msg = append_len(msg)
-    print(f'Sending: "{msg}" to {peer}')
+    log(f'Sending: "{msg}" to {peer}')
     s.sendto(msg.encode(), (peer.ip, peer.port))
     data = ""
     if wait_for_response:
         data = s.recv(10000).decode('ascii')
     if conn is None:
         s.close()
-    print(f'Sent! Received: "{data}"')
+    log(f'Sent! Received: "{data}"')
     return data

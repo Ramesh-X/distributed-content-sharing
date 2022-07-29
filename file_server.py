@@ -7,6 +7,7 @@ import re
 
 from peer import Peer
 from util import id_generator
+from logger import log_printer
 
 
 def get_handler_class(files_meta: Dict[str, str]) -> BaseHTTPRequestHandler:
@@ -42,6 +43,7 @@ class FileServer(Thread):
 
     def __init__(self, name: str, addr: Peer) -> None:
         super().__init__()
+        self.log = log_printer('file_server')
         self.file_dir = f'file_store/{name}'
         Path(self.file_dir).mkdir(parents=True, exist_ok=True)
         k = random.randint(3, 5)
@@ -58,7 +60,7 @@ class FileServer(Thread):
                                  get_handler_class(self.files_meta))
 
     def run(self) -> None:
-        print(f'File server {self.addr} started.')
+        self.log(f'File server {self.addr} started.')
         self.server.serve_forever()
 
     def stop(self) -> None:
@@ -76,12 +78,10 @@ class FileServer(Thread):
         return key
 
     def download_file(self, filename) -> Optional[str]:
-        print("Downloading file:", filename)
-        print("Available files", self.file_names)
+        self.log("Downloading file:", filename)
         if filename not in self.file_names:
             return None
         path = Path(f'{self.file_dir}/{filename}')
-        print("Path:", path, "Exists:", path.exists())
         if path.exists():
             for key in self.search_keys:
                 if self.search_keys[key] == path.absolute():

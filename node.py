@@ -4,9 +4,11 @@ import time
 
 from util import id_generator, raise_error, send, validate_response
 from peer import Peer
+from logger import log_printer
     
 class Node:
     def __init__(self, me: Peer, bs: Peer, name: str) -> None:
+        self.log = log_printer('node')
         self.me = me
         self.bs = bs
         self.name = name
@@ -33,7 +35,7 @@ class Node:
         self.connected = False
     
     def register(self) -> List[Peer]:
-        print('Registering with Bootstrap Server...')
+        self.log(f'Registering with Bootstrap Server (Details => node: {self.me}, name: {self.name})...')
         msg = f'REG {self.me.ip} {self.me.port} {self.name}'
         data = send(msg, self.bs)
         toks, err = validate_response(data, 3, 'REGOK')
@@ -45,11 +47,11 @@ class Node:
         peers = [Peer(toks[3 + i * 2], int(toks[4 + i * 2])) for i in range(no_nodes)]
         if no_nodes > 2:
             peers = random.sample(peers, 2)
-        print('Registered with Bootstrap Server.')
+        self.log('Registered with Bootstrap Server.')
         return peers
     
     def unregister(self) -> None:
-        print('Unregistering with Bootstrap Server...')
+        self.log('Unregistering with Bootstrap Server...')
         msg = f'UNREG {self.me.ip} {self.me.port} {self.name}'
         data = send(msg, self.bs)
         toks, err = validate_response(data, 3, 'UNROK')
@@ -58,10 +60,10 @@ class Node:
         value = int(toks[2])
         if value != 0:
             raise_error(f'Invalid return value: {value}')
-        print('Unregistered with Bootstrap Server.')
+        self.log('Unregistered with Bootstrap Server.')
     
     def join_to(self, peer: Peer) -> None:
-        print(f'Joining to {peer}...')
+        self.log(f'Joining to {peer}...')
         msg = f'JOIN {self.me.ip} {self.me.port}'
         data = send(msg, peer)
         toks, err = validate_response(data, 3, 'JOINOK')
@@ -71,10 +73,10 @@ class Node:
         if value != 0:
             raise_error(f'Invalid return value: {value}')
         self.peers.append(peer)
-        print(f'Joined to {peer}.')
+        self.log(f'Joined to {peer}.')
     
     def leave_from(self, peer: Peer) -> None:
-        print(f'Leaving from {peer}...')
+        self.log(f'Leaving from {peer}...')
         msg = f'LEAVE {self.me.ip} {self.me.port}'
         data = send(msg, peer)
         toks, err = validate_response(data, 3, 'LEAVEOK')
@@ -84,28 +86,28 @@ class Node:
         if value != 0:
             raise_error(f'Invalid return value: {value}')
         self.peers.remove(peer)
-        print(f'Left from {peer}.')
+        self.log(f'Left from {peer}.')
     
     def print_peers(self, peer: Peer) -> None:
-        print(f'Command {peer} to print peers...')
+        self.log(f'Command {peer} to print peers...')
         msg = 'ROUTE'
         data = send(msg, peer)
         _, err = validate_response(data, 2, 'OK')
         if err is not None:
             raise_error(err)
-        print(f'Print peers command sent to {peer}.')
+        self.log(f'Print peers command sent to {peer}.')
     
     def print_files(self, peer: Peer) -> None:
-        print(f'Command {peer} to print files...')
+        self.log(f'Command {peer} to print files...')
         msg = 'FILES'
         data = send(msg, peer)
         _, err = validate_response(data, 2, 'OK')
         if err is not None:
             raise_error(err)
-        print(f'Print files command sent to {peer}.')
+        self.log(f'Print files command sent to {peer}.')
     
     def round_trip_time(self, peer: Peer) -> int:
-        print(f'Calculating round trip time to {peer}...')
+        self.log(f'Calculating round trip time to {peer}...')
         t1 = time.time_ns()
         msg = 'OK'
         data = send(msg, peer)
@@ -114,13 +116,13 @@ class Node:
             raise_error(err)
         t2 = time.time_ns()
         x = t2-t1
-        print(f'Measured round trip time to {peer} is {x} ns')
+        self.log(f'Measured round trip time to {peer} is {x} ns')
         return x
     
     def search_file(self, query: str, respond_to: Peer=None, hop: int=0, search_key: str=None) -> None:
         if search_key is None:
             search_key = id_generator(6)
-        print(f'Searching for {query} with key: {search_key} hop: {hop} at: {time.time_ns()} ns...')
+        self.log(f'Searching for {query} with key: {search_key} hop: {hop} at: {time.time_ns()} ns...')
         if respond_to is None:
             respond_to = self.me
         msg = f'SER {respond_to.ip} {respond_to.port} {hop} {search_key} {query}'
@@ -133,17 +135,17 @@ class Node:
                 raise_error(err)
     
     def files_found(self, files: List[str], respond_to: Peer, hop: int, search_key: str) -> None:
-        print(f'Sending file found command for {len(files)} files with key {search_key}...')
+        self.log(f'Sending file found command for {len(files)} files with key {search_key}...')
         fs = ','.join(files)
         msg = f'SEROK {len(files)} {self.me.ip} {self.me.port} {hop} {search_key} {fs}'
         data = send(msg, respond_to)
         toks, err = validate_response(data, 2, 'OK')
         if err is not None:
             raise_error(err)
-        print(f'Files found command sent to {respond_to}.')
+        self.log(f'Files found command sent to {respond_to}.')
     
     def download(self, peer: Peer, filename: str) -> Optional[str]:
-        print(f'Downloading {filename}...')
+        self.log(f'Downloading {filename}...')
         msg = f'DOWN {filename}'
         data = send(msg, peer)
         toks, err = validate_response(data, 3, 'DOWNOK')
@@ -152,9 +154,9 @@ class Node:
         value = int(toks[2])
         if value == 0:
             url = toks[3]
-            print(f'{filename} can be downloaded from {url}.')
+            self.log(f'{filename} can be downloaded from {url}.')
             return url
         if value == 1:
-            print(f'{filename} is not available.')
+            self.log(f'{filename} is not available.')
             return None
         raise_error(f'Invalid return value: {value}')

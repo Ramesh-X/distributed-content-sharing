@@ -5,3 +5,5 @@ __pycache__
 /test
 /file_store
 queries.txt
+/logs
+*.log*
