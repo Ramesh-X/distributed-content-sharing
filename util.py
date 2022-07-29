@@ -39,7 +39,7 @@ def send(msg: str, peer: Peer, should_append_len=True, wait_for_response=True, c
     if should_append_len:
         msg = append_len(msg)
     log(f'Sending: "{msg}" to {peer}')
-    s.sendto(msg.encode(), (peer.ip, peer.port))
+    s.sendto(msg.encode(), peer.as_tuple())
     data = ""
     if wait_for_response:
         data = s.recv(10000).decode('ascii')

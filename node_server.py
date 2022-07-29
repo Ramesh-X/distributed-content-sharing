@@ -140,7 +140,7 @@ class NodeServer(Thread):
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.settimeout(5)
             self.log(f'Listening on node server ({self.name}): {self.node.me}')
-            s.bind((self.node.me.ip, self.node.me.port))
+            s.bind(self.node.me.as_tuple())
             while True:
                 try:
                     data, addr = s.recvfrom(10000)
