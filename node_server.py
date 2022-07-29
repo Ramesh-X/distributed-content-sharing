@@ -134,7 +134,7 @@ class NodeServer(Thread):
         self.name = name
         self.node = node
         self.file_server = file_server
-        self.executor = ThreadPoolExecutor(max_workers=1)
+        self.executor = ThreadPoolExecutor(max_workers=10)
 
     def run(self) -> None:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:

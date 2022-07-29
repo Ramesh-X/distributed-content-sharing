@@ -1,4 +1,5 @@
 from threading import Thread
+import time
 
 from node import Node
 from peer import Peer
@@ -81,6 +82,7 @@ class CMDServer(Thread):
                         if line == '':
                             continue
                         self.node.search_file(line.strip())
+                        time.sleep(0.1)
                 continue
 
             if x == 'toggle_failed':
